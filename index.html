@@ -310,7 +310,11 @@ input:focus, select:focus { border-color: var(--primary); }
     <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
     <span>سجل المشتريات</span>
   </div>
-  <div class="s-item" id="exportDataBtn" style="border-top:1px solid var(--border);color:var(--green)" title="تصدير البيانات">
+  <div class="s-item" id="syncSettingsBtn" style="border-top:1px solid var(--border);color:var(--orange)" title="إعدادات المزامنة">
+    <svg viewBox="0 0 24 24"><path d="M12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5zm7.43-2.52c.01-.1.02-.2.02-.31 0-.1-.01-.2-.02-.31l2.25-1.76a.54.54 0 0 0 .13-.69l-2.12-3.67a.54.54 0 0 0-.66-.24l-2.65 1.07c-.55-.42-1.16-.76-1.82-.96l-.4-2.82A.543.543 0 0 0 14.15 3h-4.3a.543.543 0 0 0-.53.46l-.4 2.82c-.66.2-1.27.54-1.82.96L4.47 6.17a.54.54 0 0 0-.66.24L1.69 10.08a.54.54 0 0 0 .13.69l2.25 1.76c-.02.1-.03.2-.03.31 0 .1.01.2.03.31l-2.25 1.76a.54.54 0 0 0-.13.69l2.12 3.67c.12.21.39.29.61.21l2.65-1.07c.55.42 1.16.76 1.82.96l.4 2.82c.05.35.35.61.69.61h4.3c.34 0 .64-.26.69-.61l.4-2.82c.66-.2 1.27-.54 1.82-.96l2.65 1.07c.22.08.49 0 .61-.21l2.12-3.67a.54.54 0 0 0-.13-.69l-2.25-1.76z" fill="currentColor"/></svg>
+    <span>المزامنة</span>
+  </div>
+  <div class="s-item" id="exportDataBtn" style="color:var(--green)" title="تصدير البيانات">
     <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
     <span>تصدير</span>
   </div>
@@ -594,6 +598,36 @@ input:focus, select:focus { border-color: var(--primary); }
   </div>
 </div>
 
+<!-- Sync Settings Modal -->
+<div class="modal-overlay" id="syncSettingsModal">
+  <div class="modal" style="max-width: 420px;">
+    <h2>إعدادات مزامنة السحابة</h2>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6">
+      لمزامنة بياناتك بين الكمبيوتر والهاتف، استخدم نفس "رمز المزامنة" في كلا الجهازين. سيؤدي هذا إلى ربط بياناتك ومنع تداخلها مع مستخدمين آخرين.
+    </p>
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;font-weight:600">رمز المزامنة الحالي لهذا الجهاز</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="syncKeyInput" style="flex:1;font-family:monospace;text-align:center;font-weight:bold;background:#f8f9fa;font-size:14px;padding:8px" readonly>
+        <button class="btn btn-outline btn-sm" id="copySyncKeyBtn">نسخ الرمز</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <label style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;font-weight:600">ربط بجهاز آخر (تغيير رمز المزامنة)</label>
+      <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px">
+        أدخل رمز المزامنة الخاص بجهازك الآخر لدمج البيانات ومزامنتها معه.
+      </p>
+      <div style="display:flex;gap:8px;flex-direction:column">
+        <input type="text" id="newSyncKeyInput" placeholder="أدخل رمز المزامنة هنا..." style="width:100%;font-family:monospace;text-align:center;font-size:14px;padding:8px">
+        <button class="btn btn-primary" id="saveSyncKeyBtn" style="width:100%;margin-top:8px">ربط ومزامنة البيانات</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px;display:flex;justify-content:flex-end">
+      <button class="btn btn-outline" id="closeSyncSettingsModal">إغلاق</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -602,7 +636,22 @@ const DATA_KEY = 'store_tracker_data';
 const SUPABASE_URL = 'https://xalrfejwiesywyjnmlok.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_U_BTMPxGRi6s15AWtkthhQ_WBolVmRN';
 const SUPABASE_TABLE = 'store_data';
-const SUPABASE_ROW = 'default';
+
+function getSyncKey() {
+  let key = localStorage.getItem('store_sync_key');
+  if (!key) {
+    key = 'store_' + Math.random().toString(36).substring(2, 11) + Math.random().toString(36).substring(2, 11);
+    localStorage.setItem('store_sync_key', key);
+  }
+  return key;
+}
+
+function setSyncKey(newKey) {
+  newKey = newKey.trim();
+  if (!newKey) return false;
+  localStorage.setItem('store_sync_key', newKey);
+  return true;
+}
 
 function supabaseHeaders() {
   return {
@@ -614,8 +663,9 @@ function supabaseHeaders() {
 }
 
 async function pullFromSupabase() {
+  const key = getSyncKey();
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE + '?user_id=eq.' + SUPABASE_ROW + '&select=data,updated_at', {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE + '?user_id=eq.' + key + '&select=data,updated_at', {
       headers: supabaseHeaders()
     });
     if (!res.ok) return null;
@@ -626,37 +676,56 @@ async function pullFromSupabase() {
 }
 
 async function pushToSupabase(data) {
+  const key = getSyncKey();
   try {
     setSyncStatus(false, 'حفظ...');
-    const now = new Date().toISOString();
-    // Try update first
-    const res = await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE + '?user_id=eq.' + SUPABASE_ROW, {
-      method: 'PATCH',
-      headers: supabaseHeaders(),
-      body: JSON.stringify({ data: data, updated_at: now })
+    const now = new Date(data.updated_at || Date.now()).toISOString();
+    
+    // Check if row exists first to decide PATCH vs POST
+    const checkRes = await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE + '?user_id=eq.' + key + '&select=user_id', {
+      headers: supabaseHeaders()
     });
-    const result = await res.json();
-    // If no rows updated, insert
-    if (!result || result.length === 0) {
+    const checkRows = checkRes.ok ? await checkRes.json() : [];
+    
+    if (checkRows && checkRows.length > 0) {
+      // Row exists, perform PATCH
+      await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE + '?user_id=eq.' + key, {
+        method: 'PATCH',
+        headers: supabaseHeaders(),
+        body: JSON.stringify({ data: data, updated_at: now })
+      });
+    } else {
+      // Row doesn't exist, perform POST
       await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE, {
         method: 'POST',
         headers: supabaseHeaders(),
-        body: JSON.stringify({ user_id: SUPABASE_ROW, data: data, updated_at: now })
+        body: JSON.stringify({ user_id: key, data: data, updated_at: now })
       });
     }
     setSyncStatus(true, 'متزامن');
-  } catch(e) { setSyncStatus(false, 'خطأ في الحفظ'); }
+  } catch(e) {
+    setSyncStatus(false, 'خطأ في الحفظ');
+  }
 }
 
 function getData() {
   try {
     const raw = localStorage.getItem(DATA_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        if (!parsed.products) parsed.products = {};
+        if (!parsed.shoppingList) parsed.shoppingList = [];
+        if (!parsed.updated_at) parsed.updated_at = Date.now();
+        return parsed;
+      }
+    }
   } catch(e) {}
-  return { products: {}, shoppingList: [] };
+  return { products: {}, shoppingList: [], updated_at: Date.now() };
 }
 
 function saveData(data) {
+  data.updated_at = Date.now();
   localStorage.setItem(DATA_KEY, JSON.stringify(data));
   pushToSupabase(data); // fire and forget
 }
@@ -670,35 +739,40 @@ function setSyncStatus(ok, msg) {
 async function syncFromCloud() {
   setSyncStatus(false, 'جارٍ المزامنة...');
   if (!syncDone) syncDone = true;
+  
   const remote = await pullFromSupabase();
-  if (!remote || !remote.data) {
-    setSyncStatus(false, 'فشل الاتصال');
-    return;
-  }
-  if (!remote.data.products) {
-    setSyncStatus(true, 'متزامن (فارغ)');
-    return;
-  }
-  const localRaw = localStorage.getItem(DATA_KEY);
-  let localData = null;
-  try { localData = localRaw ? JSON.parse(localRaw) : null; } catch(e) {}
+  const localData = getData();
   const localProducts = localData && localData.products ? Object.keys(localData.products).length : 0;
-  const remoteProducts = remote.data.products ? Object.keys(remote.data.products).length : 0;
-  // Use remote if local is empty or remote has more data
-  if (!localData || localProducts === 0 || remoteProducts > localProducts) {
-    if (remoteProducts > 0) {
-      localStorage.setItem(DATA_KEY, JSON.stringify(remote.data));
-      render();
+  
+  if (!remote || !remote.data) {
+    // If no remote data exists on Supabase but we have local data, upload local data
+    if (localProducts > 0) {
+      await pushToSupabase(localData);
       setSyncStatus(true, 'متزامن');
-      toast('تم التزامن من السحابة', 'success');
-      return;
+    } else {
+      setSyncStatus(true, 'متزامن (فارغ)');
     }
+    return;
   }
-  // Push local to cloud if local has data
-  if (localProducts > 0) {
+  
+  // Parse updated_at times
+  const remoteTime = remote.updated_at ? new Date(remote.updated_at).getTime() : 0;
+  const localTime = localData.updated_at || 0;
+  
+  if (remoteTime > localTime) {
+    // Remote data is newer, import it
+    localStorage.setItem(DATA_KEY, JSON.stringify(remote.data));
+    render();
+    setSyncStatus(true, 'متزامن');
+    toast('تم استيراد البيانات الأحدث من السحابة', 'success');
+  } else if (localTime > remoteTime) {
+    // Local data is newer, push it to cloud
     await pushToSupabase(localData);
+    setSyncStatus(true, 'متزامن');
+  } else {
+    // Already in sync
+    setSyncStatus(true, 'متزامن');
   }
-  setSyncStatus(true, 'متزامن');
 }
 
 // Manual sync button
@@ -1868,6 +1942,48 @@ document.querySelectorAll('.sidebar .s-item[data-page]').forEach(item => {
   });
 });
 
+document.getElementById('syncSettingsBtn').addEventListener('click', () => {
+  const syncKey = getSyncKey();
+  document.getElementById('syncKeyInput').value = syncKey;
+  document.getElementById('newSyncKeyInput').value = '';
+  document.getElementById('syncSettingsModal').classList.add('show');
+});
+
+document.getElementById('closeSyncSettingsModal').addEventListener('click', () => {
+  document.getElementById('syncSettingsModal').classList.remove('show');
+});
+
+document.getElementById('copySyncKeyBtn').addEventListener('click', () => {
+  const syncKeyInput = document.getElementById('syncKeyInput');
+  syncKeyInput.select();
+  syncKeyInput.setSelectionRange(0, 99999);
+  try {
+    navigator.clipboard.writeText(syncKeyInput.value);
+    toast('تم نسخ الرمز إلى الحافظة', 'success');
+  } catch (err) {
+    toast('يرجى نسخ الرمز يدوياً', 'error');
+  }
+});
+
+document.getElementById('saveSyncKeyBtn').addEventListener('click', async () => {
+  const newKey = document.getElementById('newSyncKeyInput').value.trim();
+  if (!newKey) {
+    toast('يرجى إدخال رمز مزامنة صالح', 'error');
+    return;
+  }
+  if (newKey === getSyncKey()) {
+    toast('هذا الرمز مستخدم بالفعل', 'error');
+    return;
+  }
+  if (confirm('هل أنت متأكد من تغيير رمز المزامنة؟ سيتم ربط هذا الجهاز بالرمز الجديد ومحاولة دمج/تنزيل البيانات.')) {
+    setSyncKey(newKey);
+    document.getElementById('syncSettingsModal').classList.remove('show');
+    toast('تم تغيير الرمز. جاري المزامنة مع السحابة...', 'success');
+    syncDone = false;
+    await syncFromCloud();
+  }
+});
+
 document.getElementById('exportDataBtn').addEventListener('click', () => {
   const data = getData();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1897,7 +2013,7 @@ document.getElementById('importDataBtn').addEventListener('click', () => {
           return;
         }
         if (!confirm('سيتم استبدال جميع البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
-        localStorage.setItem(DATA_KEY, JSON.stringify(imported));
+        saveData(imported);
         render();
         toast('تم استيراد البيانات بنجاح', 'success');
       } catch (err) {
@@ -1912,7 +2028,7 @@ document.getElementById('importDataBtn').addEventListener('click', () => {
 document.getElementById('clearAllDataBtn').addEventListener('click', () => {
   if (confirm('⚠️ هل أنت متأكد؟ سيتم حذف جميع المنتجات والطلبات والمشتريات والبيانات بشكل نهائي!')) {
     if (confirm('تأكيد نهائي: لا يمكن التراجع عن هذا الإجراء!')) {
-      localStorage.removeItem(DATA_KEY);
+      saveData({ products: {}, shoppingList: [], updated_at: Date.now() });
       render();
       toast('تم مسح جميع البيانات', 'success');
     }
