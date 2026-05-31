@@ -61,9 +61,23 @@ header .quick-stats { display: flex; gap: 16px; flex-wrap: wrap; }
 @media(max-width:768px){
   .sidebar { width: 56px; }
   .sidebar .s-item span { display: none; }
-  .sidebar .s-item { justify-content: center; padding: 14px 8px; }
+  .sidebar .s-item { justify-content: center; padding: 14px 0; }
+  .sidebar .s-item svg { width: 22px; height: 22px; }
   .sidebar .s-item .s-badge { display: none; }
-  .main-area { margin-right: 56px; }
+  .main-area { margin-right: 56px; padding: 10px; }
+  .container { padding: 8px; }
+  header { padding: 12px 0; }
+  header h1 { font-size: 17px; }
+  .card { padding: 12px; }
+  .card h2 { font-size: 14px; }
+  .tabs { flex-wrap: wrap; gap: 2px; }
+  .tab { padding: 6px 12px; font-size: 12px; }
+  .modal { margin: 10px; padding: 16px; }
+  .shop-grid { gap: 8px; }
+  .shop-item .s-img { height: 90px; }
+  .table-wrap { overflow-x: auto; }
+  table { font-size: 11px !important; }
+  th, td { padding: 4px 6px !important; white-space: nowrap; }
 }
 .card {
   background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
@@ -225,13 +239,24 @@ input:focus, select:focus { border-color: var(--primary); }
 /* Responsive */
 @media(max-width:600px){
   header .container { flex-direction: column; align-items: stretch; text-align: center; }
-  header .quick-stats { justify-content: center; }
-  .form-row { flex-direction: column; }
-  .stats-grid { grid-template-columns: repeat(3,1fr); gap: 6px; }
-  .stat-card .num { font-size: 20px; }
-  .product-item { flex-wrap: wrap; }
+  header .quick-stats { justify-content: center; font-size: 12px; }
+  header .quick-stat { padding: 6px 12px; min-width: 60px; }
+  header .quick-stat .num { font-size: 16px; }
+  .form-row { flex-direction: column; gap: 6px; }
+  .stats-grid { grid-template-columns: repeat(3,1fr); gap: 4px; }
+  .stat-card { padding: 8px 4px; }
+  .stat-card .num { font-size: 18px; }
+  .product-item { flex-wrap: wrap; padding: 8px; }
   .product-item .p-actions { width: 100%; justify-content: flex-end; margin-top: 4px; }
-  .shop-grid { grid-template-columns: repeat(2,1fr); }
+  .product-item .p-actions .btn { font-size: 11px; padding: 4px 10px; }
+  .shop-grid { grid-template-columns: repeat(2,1fr); gap: 6px; }
+  .shop-item .s-body { padding: 6px; }
+  .shop-item .s-name { font-size: 11px; }
+  .btn { font-size: 12px; padding: 8px 14px; }
+  .btn-sm { font-size: 11px; padding: 4px 8px; }
+  .suggest-list div { font-size: 12px; padding: 8px 10px; }
+  .stat-card .label { font-size: 10px; }
+  .purch-log-header { padding: 8px 10px !important; font-size: 12px !important; }
 }
 </style>
 </head>
@@ -247,6 +272,10 @@ input:focus, select:focus { border-color: var(--primary); }
     <div class="quick-stat"><div class="num" id="qs-products">0</div><div class="label">منتج</div></div>
     <div class="quick-stat"><div class="num" id="qs-requests">0</div><div class="label">إجمالي الطلبات</div></div>
     <div class="quick-stat"><div class="num" id="qs-today">0</div><div class="label">طلبات اليوم</div></div>
+    <div class="quick-stat" id="syncStatus" style="background:rgba(255,255,255,.1);min-width:auto;padding:8px 10px;font-size:11px;cursor:pointer" title="اضغط للمزامنة">
+      <div class="num" style="font-size:13px" id="syncIcon">☁️</div>
+      <div class="label" id="syncLabel">غير متزامن</div>
+    </div>
   </div>
 </div>
 </header>
@@ -281,7 +310,15 @@ input:focus, select:focus { border-color: var(--primary); }
     <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
     <span>سجل المشتريات</span>
   </div>
-  <div class="s-item" id="clearAllDataBtn" style="margin-top:auto;border-top:1px solid var(--border);color:var(--red)" title="مسح جميع البيانات">
+  <div class="s-item" id="exportDataBtn" style="border-top:1px solid var(--border);color:var(--green)" title="تصدير البيانات">
+    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+    <span>تصدير</span>
+  </div>
+  <div class="s-item" id="importDataBtn" style="color:var(--primary)" title="استيراد البيانات">
+    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" transform="rotate(180 12 12)"/></svg>
+    <span>استيراد</span>
+  </div>
+  <div class="s-item" id="clearAllDataBtn" style="color:var(--red)" title="مسح جميع البيانات">
     <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
     <span>مسح الكل</span>
   </div>
@@ -562,6 +599,54 @@ input:focus, select:focus { border-color: var(--primary); }
 <script>
 // ====== DATA LAYER ======
 const DATA_KEY = 'store_tracker_data';
+const SUPABASE_URL = 'https://xalrfejwiesywyjnmlok.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_U_BTMPxGRi6s15AWtkthhQ_WBolVmRN';
+const SUPABASE_TABLE = 'store_data';
+const SUPABASE_ROW = 'default';
+
+function supabaseHeaders() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal'
+  };
+}
+
+async function pullFromSupabase() {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE + '?user_id=eq.' + SUPABASE_ROW + '&select=data,updated_at', {
+      headers: supabaseHeaders()
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!rows || rows.length === 0) return null;
+    return { data: rows[0].data, updated_at: rows[0].updated_at };
+  } catch(e) { return null; }
+}
+
+async function pushToSupabase(data) {
+  try {
+    setSyncStatus(false, 'حفظ...');
+    const now = new Date().toISOString();
+    // Try update first
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE + '?user_id=eq.' + SUPABASE_ROW, {
+      method: 'PATCH',
+      headers: supabaseHeaders(),
+      body: JSON.stringify({ data: data, updated_at: now })
+    });
+    const result = await res.json();
+    // If no rows updated, insert
+    if (!result || result.length === 0) {
+      await fetch(SUPABASE_URL + '/rest/v1/' + SUPABASE_TABLE, {
+        method: 'POST',
+        headers: supabaseHeaders(),
+        body: JSON.stringify({ user_id: SUPABASE_ROW, data: data, updated_at: now })
+      });
+    }
+    setSyncStatus(true, 'متزامن');
+  } catch(e) { setSyncStatus(false, 'خطأ في الحفظ'); }
+}
 
 function getData() {
   try {
@@ -573,7 +658,51 @@ function getData() {
 
 function saveData(data) {
   localStorage.setItem(DATA_KEY, JSON.stringify(data));
+  pushToSupabase(data); // fire and forget
 }
+
+let syncDone = false;
+function setSyncStatus(ok, msg) {
+  document.getElementById('syncIcon').textContent = ok ? '✅' : '☁️';
+  document.getElementById('syncLabel').textContent = msg || (ok ? 'متزامن' : 'غير متزامن');
+}
+
+async function syncFromCloud() {
+  setSyncStatus(false, 'جارٍ المزامنة...');
+  if (!syncDone) syncDone = true;
+  const remote = await pullFromSupabase();
+  if (!remote || !remote.data) {
+    setSyncStatus(false, 'فشل الاتصال');
+    return;
+  }
+  if (!remote.data.products) {
+    setSyncStatus(true, 'متزامن (فارغ)');
+    return;
+  }
+  const localRaw = localStorage.getItem(DATA_KEY);
+  let localData = null;
+  try { localData = localRaw ? JSON.parse(localRaw) : null; } catch(e) {}
+  const localProducts = localData && localData.products ? Object.keys(localData.products).length : 0;
+  const remoteProducts = remote.data.products ? Object.keys(remote.data.products).length : 0;
+  // Use remote if local is empty or remote has more data
+  if (!localData || localProducts === 0 || remoteProducts > localProducts) {
+    if (remoteProducts > 0) {
+      localStorage.setItem(DATA_KEY, JSON.stringify(remote.data));
+      render();
+      setSyncStatus(true, 'متزامن');
+      toast('تم التزامن من السحابة', 'success');
+      return;
+    }
+  }
+  // Push local to cloud if local has data
+  if (localProducts > 0) {
+    await pushToSupabase(localData);
+  }
+  setSyncStatus(true, 'متزامن');
+}
+
+// Manual sync button
+document.getElementById('syncStatus').addEventListener('click', syncFromCloud);
 
 function getProducts(data) {
   return Object.values(data.products).map(p => {
@@ -1570,7 +1699,7 @@ function renderPurchasesLog() {
     html += '<div style="font-size:14px;font-weight:700">الإجمالي: ' + dayTotal + ' da</div>';
     html += '</div>';
     html += '<div class="purch-log-body" data-group="' + groupIdx + '" style="' + (isFirst ? '' : 'display:none') + '">';
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html += '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:12px">';
     html += '<thead><tr style="background:#f8f9fa;text-align:right">';
     html += '<th style="padding:6px 8px">#</th>';
     html += '<th style="padding:6px 8px">المنتج</th>';
@@ -1657,7 +1786,7 @@ function renderPurchaseHistory() {
     const lb = b.purchases[b.purchases.length-1].date;
     return lb - la;
   });
-  let html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  let html = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:13px">';
   html += '<thead><tr style="background:#f0f2f5;text-align:right">';
   html += '<th style="padding:8px 10px">المنتج</th>';
   html += '<th style="padding:8px 10px">المشتريات</th>';
@@ -1686,7 +1815,7 @@ function renderPurchaseHistory() {
     html += '<td style="padding:8px 10px;text-align:center;font-size:12px;color:var(--text-secondary)">' + new Date(last.date).toLocaleDateString('en-GB') + '</td>';
     html += '</tr>';
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   container.innerHTML = html;
 }
 
@@ -1739,10 +1868,52 @@ document.querySelectorAll('.sidebar .s-item[data-page]').forEach(item => {
   });
 });
 
+document.getElementById('exportDataBtn').addEventListener('click', () => {
+  const data = getData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'بيانات_المتجر_' + new Date().toLocaleDateString('en-GB').replace(/\//g, '-') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  toast('تم تصدير البيانات بنجاح', 'success');
+});
+
+document.getElementById('importDataBtn').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!imported.products || typeof imported.products !== 'object') {
+          toast('الملف غير صالح', 'error');
+          return;
+        }
+        if (!confirm('سيتم استبدال جميع البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
+        localStorage.setItem(DATA_KEY, JSON.stringify(imported));
+        render();
+        toast('تم استيراد البيانات بنجاح', 'success');
+      } catch (err) {
+        toast('فشل قراءة الملف', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
+
 document.getElementById('clearAllDataBtn').addEventListener('click', () => {
   if (confirm('⚠️ هل أنت متأكد؟ سيتم حذف جميع المنتجات والطلبات والمشتريات والبيانات بشكل نهائي!')) {
     if (confirm('تأكيد نهائي: لا يمكن التراجع عن هذا الإجراء!')) {
       localStorage.removeItem(DATA_KEY);
+      localStorage.removeItem('store_tracker_seeded');
       render();
       toast('تم مسح جميع البيانات', 'success');
     }
@@ -1751,8 +1922,9 @@ document.getElementById('clearAllDataBtn').addEventListener('click', () => {
 
 // ====== INIT ======
 render();
-// Demo data
-if (Object.keys(getData().products).length === 0) {
+syncFromCloud();
+// Demo data (only on first ever visit)
+if (!localStorage.getItem('store_tracker_seeded') && Object.keys(getData().products).length === 0) {
   const demoProducts = ['حليب', 'خبز', 'بيض', 'جبنة', 'زيت زيتون', 'سكر', 'أرز', 'شاي', 'قهوة', 'مياه معدنية'];
   const now = Date.now();
   const DAY = 86400000;
@@ -1771,6 +1943,7 @@ if (Object.keys(getData().products).length === 0) {
     { id: 2, name: 'معجون طماطم', image: '', note: 'الزبون يطلبه دائماً', added: now },
   ];
   saveData(data);
+  localStorage.setItem('store_tracker_seeded', '1');
   render();
   toast('تم تحميل بيانات تجريبية', 'success');
 }
