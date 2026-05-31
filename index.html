@@ -1913,7 +1913,6 @@ document.getElementById('clearAllDataBtn').addEventListener('click', () => {
   if (confirm('⚠️ هل أنت متأكد؟ سيتم حذف جميع المنتجات والطلبات والمشتريات والبيانات بشكل نهائي!')) {
     if (confirm('تأكيد نهائي: لا يمكن التراجع عن هذا الإجراء!')) {
       localStorage.removeItem(DATA_KEY);
-      localStorage.removeItem('store_tracker_seeded');
       render();
       toast('تم مسح جميع البيانات', 'success');
     }
@@ -1923,30 +1922,6 @@ document.getElementById('clearAllDataBtn').addEventListener('click', () => {
 // ====== INIT ======
 render();
 syncFromCloud();
-// Demo data (only on first ever visit)
-if (!localStorage.getItem('store_tracker_seeded') && Object.keys(getData().products).length === 0) {
-  const demoProducts = ['حليب', 'خبز', 'بيض', 'جبنة', 'زيت زيتون', 'سكر', 'أرز', 'شاي', 'قهوة', 'مياه معدنية'];
-  const now = Date.now();
-  const DAY = 86400000;
-  const data = getData();
-  demoProducts.forEach((name, i) => {
-    const count = 12 - i;
-    const requests = [];
-    for (let j = 0; j < count; j++) {
-      requests.push(now - Math.floor(Math.random() * 35 * DAY));
-    }
-    const inStore = i < 3;
-    data.products[name] = { name, requests, inStore, needToBuy: !inStore, purchases: inStore ? [{ price: Math.round(Math.random() * 30 + 5), qty: 1, date: now - Math.floor(Math.random() * 30 * DAY), note: 'إضافة مباشرة للمحل' }] : [] };
-  });
-  data.shoppingList = [
-    { id: 1, name: 'زيت طبخ', image: '', note: 'مطلوب بكثرة هذا الأسبوع', added: now },
-    { id: 2, name: 'معجون طماطم', image: '', note: 'الزبون يطلبه دائماً', added: now },
-  ];
-  saveData(data);
-  localStorage.setItem('store_tracker_seeded', '1');
-  render();
-  toast('تم تحميل بيانات تجريبية', 'success');
-}
 </script>
 </body>
 </html>
